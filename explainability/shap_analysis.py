@@ -1,0 +1,80 @@
+import shap
+import joblib
+import pandas as pd
+import numpy as np
+
+# Load trained model
+model = joblib.load("model/heart_model.pkl")
+
+
+def get_shap_explanation(input_df):
+    """
+    Generate SHAP values for a single patient record.
+    Compatible with different SHAP versions.
+    """
+
+    explainer = shap.TreeExplainer(model)
+
+    shap_values = explainer.shap_values(input_df)
+
+    # -----------------------------
+    # Handle different SHAP outputs
+    # -----------------------------
+
+    if isinstance(shap_values, list):
+        # Older SHAP versions
+        shap_values = shap_values[1]
+
+    elif isinstance(shap_values, np.ndarray):
+
+        if len(shap_values.shape) == 3:
+            # Shape:
+            # (samples, features, classes)
+            shap_values = shap_values[:, :, 1]
+
+    # -----------------------------
+    # Safety check
+    # -----------------------------
+
+    feature_values = shap_values[0]
+
+    if len(feature_values.shape) > 1:
+        feature_values = feature_values.flatten()
+
+    # -----------------------------
+    # Build feature importance table
+    # -----------------------------
+
+    feature_impacts = pd.DataFrame({
+        "Feature": input_df.columns.tolist(),
+        "SHAP_Value": feature_values
+    })
+
+    feature_impacts["Absolute"] = (
+        feature_impacts["SHAP_Value"].abs()
+    )
+
+    feature_impacts = feature_impacts.sort_values(
+        by="Absolute",
+        ascending=False
+    )
+
+    return feature_impacts
+
+
+def get_top_risk_drivers(
+    shap_df,
+    top_n=5
+):
+    """
+    Return top positive contributors to risk.
+    """
+
+    positive = shap_df[
+        shap_df["SHAP_Value"] > 0
+    ]
+
+    if len(positive) == 0:
+        return shap_df.head(top_n)
+
+    return positive.head(top_n)
