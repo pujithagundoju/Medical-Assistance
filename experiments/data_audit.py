@@ -1,148 +1,57 @@
-"""
-data_audit.py
-
-Runs the complete Exploratory Data Analysis (EDA)
-for the Explainable Cardiac Risk Assessment project.
-
-Author : Pujitha
-"""
-
 from preprocessing.data_loader import load_data
+from preprocessing.data_cleaning import clean_data
 
-from experiments.utils import (
-    create_directories,
-    print_header,
-    print_success
-)
+import pandas as pd
 
-from experiments.statistics import (
-    dataset_overview,
-    duplicate_analysis,
-    missing_value_analysis,
-    target_distribution,
-    numerical_statistics,
-    categorical_statistics
-)
-
-from experiments.plots import (
-    plot_class_distribution,
-    plot_missing_values,
-    plot_histograms,
-    plot_boxplots,
-    plot_correlation_heatmap
-)
-
-
-# ==========================================================
-# Configuration
-# ==========================================================
-
-DATA_PATH = "data/heart_disease.csv"
-
-TARGET_COLUMN = "Heart Disease Status"
-
-
-# ==========================================================
-# Main Function
-# ==========================================================
 
 def audit_dataset():
 
-    print_header(
-        "Cardiac Risk Dataset Audit"
-    )
+    df = load_data("data/heart_disease.csv")
 
-    # ------------------------------------------------------
-    # Create folders
-    # ------------------------------------------------------
+    print("="*70)
+    print("ORIGINAL DATA")
+    print("="*70)
 
-    create_directories()
+    print(df.head())
 
-    # ------------------------------------------------------
-    # Load Original Dataset
-    # ------------------------------------------------------
+    print("\nShape:", df.shape)
 
-    df = load_data(DATA_PATH)
+    print("\nMissing Values")
 
-    # ------------------------------------------------------
-    # Dataset Statistics
-    # ------------------------------------------------------
+    print(df.isnull().sum())
 
-    summary = dataset_overview(df)
+    print("\n")
 
-    duplicates = duplicate_analysis(df)
+    print("="*70)
+    print("TARGET DISTRIBUTION")
+    print("="*70)
 
-    missing = missing_value_analysis(df)
+    print(df["Heart Disease Status"].value_counts())
 
-    target = target_distribution(
-        df,
-        TARGET_COLUMN
-    )
-
-    numerical_statistics(df)
-
-    categorical_statistics(df)
-
-    # ------------------------------------------------------
-    # Visualizations
-    # ------------------------------------------------------
-
-    plot_class_distribution(
-        df,
-        TARGET_COLUMN
-    )
-
-    plot_missing_values(
-        missing
-    )
-
-    plot_histograms(df)
-
-    plot_boxplots(df)
-
-    plot_correlation_heatmap(df)
-
-    # ------------------------------------------------------
-    # Console Summary
-    # ------------------------------------------------------
-
-    print_header(
-        "Audit Summary"
-    )
-
-    print(f"Rows              : {df.shape[0]}")
-
-    print(f"Columns           : {df.shape[1]}")
-
-    print(f"Duplicate Rows    : {duplicates}")
+    print("\nPercentage")
 
     print(
-        f"Missing Columns   : "
-        f"{(missing['Missing Values'] > 0).sum()}"
+        df["Heart Disease Status"].value_counts(normalize=True)*100
     )
 
-    print(
-        f"Target Classes    : "
-        f"{len(target)}"
-    )
+    print("\n")
 
-    print_success(
-        "EDA Completed Successfully."
-    )
+    print("="*70)
+    print("AFTER PREPROCESSING")
+    print("="*70)
 
-    print_success(
-        "CSV files saved in results/csv/"
-    )
+    cleaned_df, encoders = clean_data(df)
 
-    print_success(
-        "Plots saved in results/plots/"
-    )
+    print(cleaned_df.head())
 
+    print("\nEncoded Classes")
 
-# ==========================================================
-# Run
-# ==========================================================
+    print(encoders["Heart Disease Status"].classes_)
+
+    print("\nEncoded Target Counts")
+
+    print(cleaned_df["Heart Disease Status"].value_counts())
+
 
 if __name__ == "__main__":
-
     audit_dataset()
