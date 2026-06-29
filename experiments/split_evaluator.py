@@ -1,10 +1,21 @@
+"""
+===========================================================
+Train-Test Split Evaluation
+
+Objective:
+Evaluate different train-test split ratios to identify
+the most suitable split for the cardiac risk prediction model.
+
+Author : Pujitha
+===========================================================
+"""
+
 import os
 import time
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -18,289 +29,363 @@ from preprocessing.data_loader import load_data
 from preprocessing.data_cleaning import clean_data
 
 
-def evaluate_splits():
+# ----------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------
 
-    print("=" * 70)
-    print("CARDIAC RISK MODEL - TRAIN TEST SPLIT EVALUATION")
-    print("=" * 70)
+DATA_PATH = "data/heart_disease.csv"
 
-    # Create results folder automatically
-    os.makedirs("results", exist_ok=True)
+RESULTS_FOLDER = "results"
 
-    # -------------------------
-    # Load Dataset
-    # -------------------------
+RESULT_FILE = os.path.join(
+    RESULTS_FOLDER,
+    "split_results.csv"
+)
 
-    df = load_data("data/heart_disease.csv")
+REPORT_FOLDER = "reports"
 
-    df, encoders = clean_data(df)
+REPORT_FILE = os.path.join(
+    REPORT_FOLDER,
+    "split_evaluation_summary.txt"
+)
+
+SPLITS = [
+    0.40,
+    0.35,
+    0.30,
+    0.25,
+    0.20,
+    0.15,
+    0.10
+]
+
+
+# ----------------------------------------------------------
+# Load Dataset
+# ----------------------------------------------------------
+
+def load_dataset():
+
+    df = load_data(DATA_PATH)
+
+    df, _ = clean_data(df)
 
     X = df.drop("Heart Disease Status", axis=1)
+
     y = df["Heart Disease Status"]
 
-    # -------------------------
-    # Different Split Ratios
-    # -------------------------
+    return X, y
 
-    split_ratios = [
-        0.40,
-        0.35,
-        0.30,
-        0.25,
-        0.20,
-        0.15,
-        0.10
-    ]
 
-    results = []
+# ----------------------------------------------------------
+# Evaluate One Split
+# ----------------------------------------------------------
 
-    # -------------------------
-    # Evaluate Each Split
-    # -------------------------
+def evaluate_split(X, y, test_size):
 
-    for test_size in split_ratios:
+    train_percent = int((1 - test_size) * 100)
 
-        train_percent = int((1 - test_size) * 100)
-        test_percent = int(test_size * 100)
+    test_percent = int(test_size * 100)
 
-        print(f"\nEvaluating Split {train_percent}:{test_percent}")
+    X_train, X_test, y_train, y_test = train_test_split(
 
-        X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
 
-            X,
-            y,
+        test_size=test_size,
 
-            test_size=test_size,
+        random_state=42,
 
-            random_state=42,
-
-            stratify=y
-
-        )
-
-        # Balanced Random Forest
-
-        model = RandomForestClassifier(
-
-            n_estimators=200,
-
-            random_state=42,
-
-            class_weight="balanced"
-
-        )
-
-        # -------------------------
-        # Training
-        # -------------------------
-
-        train_start = time.time()
-
-        model.fit(X_train, y_train)
-
-        train_end = time.time()
-
-        # -------------------------
-        # Prediction
-        # -------------------------
-
-        predict_start = time.time()
-
-        predictions = model.predict(X_test)
-
-        probabilities = model.predict_proba(X_test)[:, 1]
-
-        predict_end = time.time()
-
-        # -------------------------
-        # Metrics
-        # -------------------------
-
-        accuracy = accuracy_score(
-
-            y_test,
-
-            predictions
-
-        )
-
-        precision = precision_score(
-
-            y_test,
-
-            predictions,
-
-            average="binary",
-
-            zero_division=0
-
-        )
-
-        recall = recall_score(
-
-            y_test,
-
-            predictions,
-
-            average="binary",
-
-            zero_division=0
-
-        )
-
-        f1 = f1_score(
-
-            y_test,
-
-            predictions,
-
-            average="binary",
-
-            zero_division=0
-
-        )
-
-        auc = roc_auc_score(
-
-            y_test,
-
-            probabilities
-
-        )
-
-        cm = confusion_matrix(
-
-            y_test,
-
-            predictions
-
-        )
-
-        tn, fp, fn, tp = cm.ravel()
-
-        results.append({
-
-            "Train %": train_percent,
-
-            "Test %": test_percent,
-
-            "Accuracy": round(accuracy, 4),
-
-            "Precision": round(precision, 4),
-
-            "Recall": round(recall, 4),
-
-            "F1 Score": round(f1, 4),
-
-            "ROC AUC": round(auc, 4),
-
-            "True Positive": tp,
-
-            "True Negative": tn,
-
-            "False Positive": fp,
-
-            "False Negative": fn,
-
-            "Training Time (s)": round(
-
-                train_end - train_start,
-
-                4
-
-            ),
-
-            "Prediction Time (s)": round(
-
-                predict_end - predict_start,
-
-                4
-
-            )
-
-        })
-
-    # -------------------------
-    # Results Table
-    # -------------------------
-
-    results_df = pd.DataFrame(results)
-
-    results_df = results_df.sort_values(
-
-        by="ROC AUC",
-
-        ascending=False
+        stratify=y
 
     )
 
-    print("\n")
+    model = RandomForestClassifier(
+
+        n_estimators=200,
+
+        random_state=42,
+
+        class_weight="balanced"
+
+    )
+
+    # ----------------------
+    # Training
+    # ----------------------
+
+    train_start = time.perf_counter()
+
+    model.fit(X_train, y_train)
+
+    training_time = time.perf_counter() - train_start
+
+    # ----------------------
+    # Prediction
+    # ----------------------
+
+    predict_start = time.perf_counter()
+
+    predictions = model.predict(X_test)
+
+    probabilities = model.predict_proba(X_test)[:, 1]
+
+    prediction_time = time.perf_counter() - predict_start
+
+    # ----------------------
+    # Confusion Matrix
+    # ----------------------
+
+    tn, fp, fn, tp = confusion_matrix(
+
+        y_test,
+
+        predictions
+
+    ).ravel()
+
+    # ----------------------
+    # Metrics
+    # ----------------------
+
+    return {
+
+        "Train %": train_percent,
+
+        "Test %": test_percent,
+
+        "Accuracy": round(
+            accuracy_score(y_test, predictions), 4
+        ),
+
+        "Precision": round(
+            precision_score(
+                y_test,
+                predictions,
+                zero_division=0
+            ), 4
+        ),
+
+        "Recall": round(
+            recall_score(
+                y_test,
+                predictions,
+                zero_division=0
+            ), 4
+        ),
+
+        "F1 Score": round(
+            f1_score(
+                y_test,
+                predictions,
+                zero_division=0
+            ), 4
+        ),
+
+        "ROC AUC": round(
+            roc_auc_score(
+                y_test,
+                probabilities
+            ), 4
+        ),
+
+        "True Positive": tp,
+
+        "True Negative": tn,
+
+        "False Positive": fp,
+
+        "False Negative": fn,
+
+        "Training Time (s)": round(
+            training_time,
+            4
+        ),
+
+        "Prediction Time (s)": round(
+            prediction_time,
+            6
+        )
+
+    }
+
+
+# ----------------------------------------------------------
+# Save Summary Report
+# ----------------------------------------------------------
+
+def generate_report(best_result):
+
+    os.makedirs(REPORT_FOLDER, exist_ok=True)
+
+    with open(REPORT_FILE, "w") as report:
+
+        report.write("=" * 60 + "\n")
+
+        report.write("TRAIN-TEST SPLIT EVALUATION\n")
+
+        report.write("=" * 60 + "\n\n")
+
+        report.write(
+            f"Best Split : "
+            f"{best_result['Train %']}:{best_result['Test %']}\n\n"
+        )
+
+        report.write(
+            f"Accuracy : {best_result['Accuracy']}\n"
+        )
+
+        report.write(
+            f"Precision : {best_result['Precision']}\n"
+        )
+
+        report.write(
+            f"Recall : {best_result['Recall']}\n"
+        )
+
+        report.write(
+            f"F1 Score : {best_result['F1 Score']}\n"
+        )
+
+        report.write(
+            f"ROC AUC : {best_result['ROC AUC']}\n\n"
+        )
+
+        report.write(
+            f"Training Time : "
+            f"{best_result['Training Time (s)']} sec\n"
+        )
+
+        report.write(
+            f"Prediction Time : "
+            f"{best_result['Prediction Time (s)']} sec\n\n"
+        )
+
+        report.write("Conclusion\n")
+
+        report.write("-" * 60 + "\n")
+
+        report.write(
+            "The selected split achieved the highest ROC-AUC\n"
+            "while maintaining balanced Accuracy, Precision,\n"
+            "Recall and F1-score. This split will be used\n"
+            "for subsequent experiments.\n"
+        )
+
+
+# ----------------------------------------------------------
+# Main
+# ----------------------------------------------------------
+
+def main():
+
+    print("\n" + "=" * 70)
+
+    print("CARDIAC RISK - TRAIN TEST SPLIT EVALUATION")
 
     print("=" * 70)
 
-    print("FINAL RESULTS")
+    os.makedirs(RESULTS_FOLDER, exist_ok=True)
 
-    print("=" * 70)
+    X, y = load_dataset()
 
-    print(results_df)
+    results = []
 
-    # -------------------------
-    # Save CSV
-    # -------------------------
+    for split in SPLITS:
 
-    csv_path = "results/split_results.csv"
+        train_percent = int((1 - split) * 100)
+
+        test_percent = int(split * 100)
+
+        print(
+            f"Evaluating Split "
+            f"{train_percent}:{test_percent}"
+        )
+
+        results.append(
+
+            evaluate_split(
+                X,
+                y,
+                split
+            )
+
+        )
+
+    results_df = pd.DataFrame(results)
+
+    # Rank using ROC-AUC → F1 → Accuracy
+
+    results_df = results_df.sort_values(
+
+        by=[
+            "ROC AUC",
+            "F1 Score",
+            "Accuracy"
+        ],
+
+        ascending=False
+
+    ).reset_index(drop=True)
+
+    results_df.insert(
+
+        0,
+
+        "Rank",
+
+        range(1, len(results_df) + 1)
+
+    )
 
     results_df.to_csv(
 
-        csv_path,
+        RESULT_FILE,
 
         index=False
 
     )
 
-    print("\n")
-
-    print(f"Results saved successfully to:\n{csv_path}")
-
-    # -------------------------
-    # Best Split
-    # -------------------------
-
     best = results_df.iloc[0]
 
+    generate_report(best)
+
     print("\n")
 
-    print("=" * 70)
+    print(results_df)
 
-    print("BEST SPLIT FOUND")
+    print("\n" + "=" * 70)
+
+    print("BEST SPLIT")
 
     print("=" * 70)
 
     print(
-
+        f"Split : "
         f"{best['Train %']}:{best['Test %']}"
-
     )
 
     print(
-
-        f"ROC AUC : {best['ROC AUC']}"
-
+        f"ROC-AUC : {best['ROC AUC']}"
     )
 
     print(
-
-        f"Accuracy : {best['Accuracy']}"
-
-    )
-
-    print(
-
         f"F1 Score : {best['F1 Score']}"
-
     )
+
+    print(
+        f"Accuracy : {best['Accuracy']}"
+    )
+
+    print("\nResults Saved To")
+
+    print(f"✔ {RESULT_FILE}")
+
+    print(f"✔ {REPORT_FILE}")
+
+    print("=" * 70)
 
 
 if __name__ == "__main__":
 
-    evaluate_splits()
+    main()
