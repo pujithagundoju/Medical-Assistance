@@ -386,206 +386,340 @@
 #         st.error(
 #             f"Error: {str(e)}"
 #         )
+"""
+Explainable Cardiac Risk Assessment Assistant
+
+Main Streamlit Application
+"""
+
 import streamlit as st
-import pandas as pd
-from dotenv import load_dotenv
 
-load_dotenv()
+# ==========================================================
+# Configuration
+# ==========================================================
 
-# =====================================================
-# CORE PIPELINE
-# =====================================================
+from config import (
+    APP_TITLE,
+    APP_ICON,
+    LAYOUT
+)
+
+# ==========================================================
+# UI Components
+# ==========================================================
+
+from ui.sidebar import render_sidebar
+from ui.patient_form import render_patient_form
+from ui.prediction_cards import render_prediction_cards
+from ui.shap_tab import render_shap_tab
+from ui.lime_tab import render_lime_tab
+from ui.recommendation_tab import render_recommendation_tab
+from ui.counterfactual_tab import render_counterfactual_tab
+from ui.about_tab import render_about_tab
+
+# ==========================================================
+# Backend
+# ==========================================================
+
 from preprocessing.preprocess_input import preprocess_input
+
 from model.predictor import predict_risk
 
-# =====================================================
-# EXPLAINABILITY
-# =====================================================
+from visualizations.risk_gauge import create_gauge
+
+from services.clinical_interpreter import interpret_patient
+
+from services.explanation_service import explain_prediction
+
 from explainability.shap_analysis import (
     get_shap_explanation,
     get_top_risk_drivers
 )
 
-from explainability.lime_analysis import get_lime_explanation
+# ==========================================================
+# Streamlit Configuration
+# ==========================================================
 
-# =====================================================
-# CLINICAL LAYER
-# =====================================================
-from services.clinical_interpreter import generate_clinical_summary
-from services.recommendation_service import generate_recommendations
-from services.counterfactual_service import generate_counterfactual
-from services.explanation_service import explain_prediction
-
-# =====================================================
-# VISUALIZATION
-# =====================================================
-from visualizations.risk_gauge import create_gauge
-
-
-# =====================================================
-# PAGE CONFIG
-# =====================================================
 st.set_page_config(
-    page_title="Cardiac Risk AI System",
-    layout="wide"
+
+    page_title=APP_TITLE,
+
+    page_icon=APP_ICON,
+
+    layout=LAYOUT
+
 )
 
-st.title("❤️ Explainable Cardiac Risk Assessment System")
-st.markdown("AI-powered clinical decision support with SHAP + LIME + Counterfactuals")
+# ==========================================================
+# Sidebar
+# ==========================================================
+
+render_sidebar()
+
+# ==========================================================
+# Header
+# ==========================================================
+
+st.title(APP_TITLE)
+
+st.markdown(
+"""
+AI-powered Clinical Decision Support System using
+
+Machine Learning
+
+Explainable AI
+
+Clinical Decision Support
+
+Counterfactual Analysis
+
+Google Gemini AI
+"""
+)
+
 st.markdown("---")
 
+# ==========================================================
+# Patient Form
+# ==========================================================
 
-# =====================================================
-# INPUT SECTION
-# =====================================================
-st.subheader("Patient Information")
+patient_data = render_patient_form()
 
-col1, col2 = st.columns(2)
+st.markdown("---")
 
-with col1:
-    age = st.number_input("Age", 18, 120, 40)
-    gender = st.selectbox("Gender", ["Male", "Female"])
-    height = st.number_input("Height (cm)", 100, 220, 170)
-    weight = st.number_input("Weight (kg)", 30, 200, 70)
-    systolic_bp = st.number_input("Systolic BP", 60, 250, 120)
-    diastolic_bp = st.number_input("Diastolic BP", 40, 180, 80)
+predict_button = st.button(
 
-with col2:
-    cholesterol = st.number_input("Cholesterol", 50, 500, 180)
-    glucose = st.number_input("Glucose", 50, 300, 100)
-    smoking = st.selectbox("Smoking", [0, 1])
-    alcohol = st.selectbox("Alcohol", [0, 1])
-    physical_activity = st.selectbox("Physical Activity", [0, 1])
+    "❤️ Predict Cardiac Risk",
 
+    use_container_width=True
 
-# =====================================================
-# PREDICTION BUTTON
-# =====================================================
-if st.button("Predict Cardiac Risk"):
+)
+
+# ==========================================================
+# Prediction
+# ==========================================================
+
+if predict_button:
 
     try:
 
-        # ---------------------------
-        # INPUT DICTIONARY
-        # ---------------------------
-        patient_data = {
-            "Age": age,
-            "Gender": gender,
-            "Height": height,
-            "Weight": weight,
-            "Systolic_BP": systolic_bp,
-            "Diastolic_BP": diastolic_bp,
-            "Cholesterol": cholesterol,
-            "Glucose": glucose,
-            "Smoking": smoking,
-            "Alcohol": alcohol,
-            "Physical_Activity": physical_activity
-        }
+        # --------------------------------------------------
 
-        # ---------------------------
-        # PREPROCESSING
-        # ---------------------------
-        processed_data = preprocess_input(patient_data)
+        processed_data = preprocess_input(
 
-        # ---------------------------
-        # PREDICTION
-        # ---------------------------
-        prediction, probability, risk_level = predict_risk(processed_data)
+            patient_data
 
-        # ---------------------------
-        # EXPLAINABILITY
-        # ---------------------------
-        shap_df = get_shap_explanation(processed_data)
-        top_factors = get_top_risk_drivers(shap_df)
+        )
 
-        lime_df = get_lime_explanation(processed_data)
+        # --------------------------------------------------
 
-        # ---------------------------
-        # CLINICAL INTERPRETATION
-        # ---------------------------
-        clinical_summary = generate_clinical_summary(patient_data)
+        prediction, probability, risk_level = predict_risk(
 
-        # ---------------------------
-        # COUNTERFACTUAL
-        # ---------------------------
-        counterfactual = generate_counterfactual(patient_data)
-        improved_risk = counterfactual["improved_risk"]
+            processed_data
 
-        # ---------------------------
-        # AI EXPLANATION
-        # ---------------------------
-        explanation = explain_prediction(
-            patient_data,
+        )
+
+        # --------------------------------------------------
+
+        clinical_summary = interpret_patient(
+
+            patient_data
+
+        )
+
+        # --------------------------------------------------
+        # Compute SHAP ONLY ONCE
+        # --------------------------------------------------
+
+        shap_df = get_shap_explanation(
+
+            processed_data
+
+        )
+
+        top_factors = get_top_risk_drivers(
+
+            shap_df
+
+        )
+
+        # --------------------------------------------------
+        # Prediction Dashboard
+        # --------------------------------------------------
+
+        render_prediction_cards(
+
+            prediction,
+
             probability,
-            shap_df,
-            clinical_summary
+
+            risk_level,
+
+            patient_data
+
         )
 
-        # =====================================================
-        # OUTPUT SECTION
-        # =====================================================
         st.markdown("---")
-        st.subheader("Prediction Result")
 
-        if prediction == 1:
-            st.error(f"High Risk ({probability*100:.2f}%)")
-        else:
-            st.success(f"Low Risk ({probability*100:.2f}%)")
+        st.header("❤️ Cardiac Risk Gauge")
 
-        st.info(f"Risk Level: {risk_level}")
+        gauge = create_gauge(
 
-        st.plotly_chart(create_gauge(probability), use_container_width=True)
+            probability
 
-        # ---------------------------
-        # CLINICAL SUMMARY
-        # ---------------------------
-        st.subheader("Clinical Summary")
-        st.json(clinical_summary)
-
-        # ---------------------------
-        # SHAP
-        # ---------------------------
-        st.subheader("Top Risk Drivers (SHAP)")
-        st.dataframe(top_factors[["Feature", "SHAP_Value"]])
-
-        # ---------------------------
-        # LIME
-        # ---------------------------
-        st.subheader("Local Explanation (LIME)")
-        st.dataframe(lime_df)
-
-        # ---------------------------
-        # AI EXPLANATION
-        # ---------------------------
-        st.subheader("AI Explanation")
-        st.write(explanation)
-
-        # ---------------------------
-        # RECOMMENDATIONS
-        # ---------------------------
-        st.subheader("Personalized Recommendations")
-
-        recommendations = generate_recommendations(patient_data)
-        for rec in recommendations:
-            st.write(f"• {rec['Recommendation']} ({rec['Priority']})")
-
-        # ---------------------------
-        # COUNTERFACTUAL
-        # ---------------------------
-        st.subheader("What-If Scenario")
-
-        st.metric("Current Risk", f"{probability*100:.1f}%")
-        st.metric("Improved Risk", f"{improved_risk*100:.1f}%")
-        st.metric(
-            "Potential Reduction",
-            f"{(probability - improved_risk)*100:.1f}%"
         )
 
-        st.info(
-            "This shows how risk may improve if modifiable lifestyle "
-            "and clinical factors are optimized."
+        st.plotly_chart(
+
+            gauge,
+
+            use_container_width=True
+
         )
 
-    except Exception as e:
-        st.error("An error occurred during prediction.")
-        st.exception(e)
+        st.markdown("---")
+        # ==========================================================
+        # Dashboard Tabs
+        # ==========================================================
+
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+
+            [
+
+                "📊 Clinical Summary",
+
+                "🧠 SHAP",
+
+                "🔍 LIME",
+
+                "🤖 AI Explanation",
+
+                "🩺 Recommendations",
+
+                "🔄 What-If Analysis"
+
+            ]
+
+        )
+
+        # ==========================================================
+        # TAB 1 : Clinical Summary
+        # ==========================================================
+
+        with tab1:
+
+            st.subheader("Patient Clinical Summary")
+
+            if isinstance(clinical_summary, dict):
+
+                for key, value in clinical_summary.items():
+
+                    st.write(
+
+                        f"**{key}:** {value}"
+
+                    )
+
+            else:
+
+                st.write(clinical_summary)
+
+        # ==========================================================
+        # TAB 2 : SHAP
+        # ==========================================================
+
+        with tab2:
+
+            st.subheader("SHAP Explainability")
+
+            render_shap_tab(
+
+                processed_data
+
+            )
+
+        # ==========================================================
+        # TAB 3 : LIME
+        # ==========================================================
+
+        with tab3:
+
+            st.subheader("LIME Explainability")
+
+            render_lime_tab(
+
+                processed_data
+
+            )
+
+        # ==========================================================
+        # TAB 4 : Gemini Explanation
+        # ==========================================================
+
+        with tab4:
+
+            st.subheader(
+
+                "AI Clinical Explanation"
+
+            )
+
+            explanation = explain_prediction(
+
+                patient_data,
+
+                probability,
+
+                top_factors,
+
+                clinical_summary
+
+            )
+
+            st.write(
+
+                explanation
+
+            )
+
+        # ==========================================================
+        # TAB 5 : Recommendations
+        # ==========================================================
+
+        with tab5:
+
+            st.subheader(
+
+                "Personalized Recommendations"
+
+            )
+
+            render_recommendation_tab(
+
+                patient_data
+
+            )
+
+        # ==========================================================
+        # TAB 6 : Counterfactual
+        # ==========================================================
+
+        with tab6:
+
+            st.subheader(
+
+                "What-If Analysis"
+
+            )
+
+            render_counterfactual_tab(
+
+                patient_data,
+
+                probability
+
+            )
+
+        st.markdown("---")    
+        
