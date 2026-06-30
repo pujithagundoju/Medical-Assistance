@@ -45,50 +45,78 @@
 #                 )
 
 #     return pd.DataFrame([processed_data])
+"""
+Preprocess User Input
+
+Converts Streamlit form data into the
+same format used during model training.
+"""
+
 import pandas as pd
 
 
-def preprocess_input(input_data: dict) -> pd.DataFrame:
+def preprocess_input(patient_data: dict) -> pd.DataFrame:
     """
-    Convert Streamlit user input
-    into model-ready dataframe.
+    Convert user input into model-ready DataFrame.
     """
-
-    age = input_data["Age"]
-
-    gender = 1 if input_data["Gender"] == "Male" else 0
-
-    height = input_data["Height"]
-
-    weight = input_data["Weight"]
-
-    bmi = weight / ((height / 100) ** 2)
 
     row = {
 
-        "Age": age,
+        "Age": patient_data["Age"],
 
-        "Gender": gender,
+        "Gender": 1 if patient_data["Gender"] == "Male" else 0,
 
-        "Height": height,
+        "Blood Pressure": patient_data["Blood Pressure"],
 
-        "Weight": weight,
+        "Cholesterol Level": patient_data["Cholesterol Level"],
 
-        "Systolic_BP": input_data["Systolic_BP"],
+        "Exercise Habits": {
+            "Low": 0,
+            "Medium": 1,
+            "High": 2
+        }[patient_data["Exercise Habits"]],
 
-        "Diastolic_BP": input_data["Diastolic_BP"],
+        "Smoking": 1 if patient_data["Smoking"] == "Yes" else 0,
 
-        "Cholesterol": input_data["Cholesterol"],
+        "Family Heart Disease": 1 if patient_data["Family Heart Disease"] == "Yes" else 0,
 
-        "Glucose": input_data["Glucose"],
+        "Diabetes": 1 if patient_data["Diabetes"] == "Yes" else 0,
 
-        "Smoking": input_data["Smoking"],
+        "BMI": patient_data["BMI"],
 
-        "Alcohol": input_data["Alcohol"],
+        "High Blood Pressure": 1 if patient_data["High Blood Pressure"] == "Yes" else 0,
 
-        "Physical_Activity": input_data["Physical_Activity"],
+        "Low HDL Cholesterol": 1 if patient_data["Low HDL Cholesterol"] == "Yes" else 0,
 
-        "BMI": bmi
+        "High LDL Cholesterol": 1 if patient_data["High LDL Cholesterol"] == "Yes" else 0,
+
+        "Alcohol Consumption": {
+            "Low": 0,
+            "Medium": 1,
+            "High": 2
+        }[patient_data["Alcohol Consumption"]],
+
+        "Stress Level": {
+            "Low": 0,
+            "Medium": 1,
+            "High": 2
+        }[patient_data["Stress Level"]],
+
+        "Sleep Hours": patient_data["Sleep Hours"],
+
+        "Sugar Consumption": {
+            "Low": 0,
+            "Medium": 1,
+            "High": 2
+        }[patient_data["Sugar Consumption"]],
+
+        "Triglyceride Level": patient_data["Triglyceride Level"],
+
+        "Fasting Blood Sugar": patient_data["Fasting Blood Sugar"],
+
+        "CRP Level": patient_data["CRP Level"],
+
+        "Homocysteine Level": patient_data["Homocysteine Level"]
 
     }
 

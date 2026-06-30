@@ -721,5 +721,54 @@ if predict_button:
 
             )
 
-        st.markdown("---")    
+        st.markdown("---")
+                # ==========================================================
+        # ABOUT SECTION
+        # ==========================================================
+
+        st.markdown("---")
+
+        with st.expander(
+            "ℹ About This Application"
+        ):
+
+            render_about_tab()
+
+    # ==========================================================
+    # ERROR HANDLING
+    # ==========================================================
+
+    except Exception as e:
+
+        st.error(
+            "An unexpected error occurred while processing the prediction."
+        )
+
+        st.exception(e)
+
+# ==========================================================
+# FOOTER
+# ==========================================================
+
+st.markdown("---")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+
+    st.caption(
+        "❤️ Explainable Cardiac Risk Assessment Assistant"
+    )
+
+with col2:
+
+    st.caption(
+        "Machine Learning + Explainable AI"
+    )
+
+with col3:
+
+    st.caption(
+        "Version 2.0"
+    )
         
