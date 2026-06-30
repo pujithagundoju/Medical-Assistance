@@ -55,6 +55,9 @@ import joblib
 import pandas as pd
 import streamlit as st
 
+from config import MODEL_PATH
+from utils import get_risk_category
+
 
 # =====================================================
 # Load Model (Cached)
@@ -65,7 +68,9 @@ def load_model():
     """
     Load trained model only once.
     """
-    model = joblib.load("model/best_model.pkl")
+
+    model = joblib.load(MODEL_PATH)
+
     return model
 
 
@@ -91,7 +96,7 @@ def predict(processed_data):
 
 def predict_probability(processed_data):
     """
-    Returns probability of Heart Disease.
+    Returns probability of heart disease.
     """
 
     model = load_model()
@@ -107,39 +112,17 @@ def predict_probability(processed_data):
 
 def predict_risk(processed_data):
     """
-    Returns
-
-    prediction
-
-    probability
-
-    risk level
-
+    Returns:
+        prediction (int)
+        probability (float)
+        risk_level (str)
     """
 
     prediction = predict(processed_data)
 
     probability = predict_probability(processed_data)
 
-    if probability < 0.20:
-
-        risk_level = "Very Low"
-
-    elif probability < 0.40:
-
-        risk_level = "Low"
-
-    elif probability < 0.60:
-
-        risk_level = "Moderate"
-
-    elif probability < 0.80:
-
-        risk_level = "High"
-
-    else:
-
-        risk_level = "Very High"
+    risk_level = get_risk_category(probability)
 
     return prediction, probability, risk_level
 
@@ -155,15 +138,20 @@ def batch_predict(df):
 
     model = load_model()
 
-    prediction = model.predict(df)
+    predictions = model.predict(df)
 
-    probability = model.predict_proba(df)[:, 1]
+    probabilities = model.predict_proba(df)[:, 1]
 
     results = pd.DataFrame({
 
-        "Prediction": prediction,
+        "Prediction": predictions,
 
-        "Probability": probability
+        "Probability": probabilities,
+
+        "Risk Level": [
+            get_risk_category(p)
+            for p in probabilities
+        ]
 
     })
 
