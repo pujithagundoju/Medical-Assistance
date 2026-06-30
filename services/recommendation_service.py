@@ -56,8 +56,8 @@
 """
 Recommendation Service
 
-Generates personalized recommendations
-based on patient information.
+Generate personalized recommendations
+for the Kaggle Cardiovascular Dataset.
 """
 
 
@@ -65,9 +65,133 @@ def generate_recommendations(patient):
 
     recommendations = []
 
-    # =====================================================
+    # ==========================================
+    # BMI
+    # ==========================================
+
+    bmi = patient["Weight"] / (
+        (patient["Height"] / 100) ** 2
+    )
+
+    if bmi >= 30:
+
+        recommendations.append({
+
+            "Priority": "High",
+
+            "Category": "Weight",
+
+            "Recommendation":
+            "Reduce body weight through a balanced diet and regular physical activity."
+
+        })
+
+    elif bmi >= 25:
+
+        recommendations.append({
+
+            "Priority": "Medium",
+
+            "Category": "Weight",
+
+            "Recommendation":
+            "Maintain a healthy diet and increase physical activity to reach a normal BMI."
+
+        })
+
+    # ==========================================
+    # Blood Pressure
+    # ==========================================
+
+    if patient["Systolic_BP"] >= 140:
+
+        recommendations.append({
+
+            "Priority": "High",
+
+            "Category": "Blood Pressure",
+
+            "Recommendation":
+            "Consult your physician regarding blood pressure control and monitor it regularly."
+
+        })
+
+    elif patient["Systolic_BP"] >= 120:
+
+        recommendations.append({
+
+            "Priority": "Medium",
+
+            "Category": "Blood Pressure",
+
+            "Recommendation":
+            "Reduce salt intake and monitor blood pressure regularly."
+
+        })
+
+    # ==========================================
+    # Cholesterol
+    # ==========================================
+
+    if patient["Cholesterol"] == "Well Above Normal":
+
+        recommendations.append({
+
+            "Priority": "High",
+
+            "Category": "Diet",
+
+            "Recommendation":
+            "Reduce saturated fats and increase fruits, vegetables and whole grains."
+
+        })
+
+    elif patient["Cholesterol"] == "Above Normal":
+
+        recommendations.append({
+
+            "Priority": "Medium",
+
+            "Category": "Diet",
+
+            "Recommendation":
+            "Follow a heart-healthy diet to improve cholesterol levels."
+
+        })
+
+    # ==========================================
+    # Glucose
+    # ==========================================
+
+    if patient["Glucose"] == "Well Above Normal":
+
+        recommendations.append({
+
+            "Priority": "High",
+
+            "Category": "Medical",
+
+            "Recommendation":
+            "Consult your physician for blood glucose evaluation."
+
+        })
+
+    elif patient["Glucose"] == "Above Normal":
+
+        recommendations.append({
+
+            "Priority": "Medium",
+
+            "Category": "Medical",
+
+            "Recommendation":
+            "Limit sugar intake and monitor blood glucose levels."
+
+        })
+
+    # ==========================================
     # Smoking
-    # =====================================================
+    # ==========================================
 
     if patient["Smoking"] == "Yes":
 
@@ -78,190 +202,15 @@ def generate_recommendations(patient):
             "Category": "Lifestyle",
 
             "Recommendation":
-            "Quit smoking immediately. Smoking is one of the strongest risk factors for cardiovascular disease."
+            "Quit smoking. Smoking significantly increases cardiovascular risk."
 
         })
 
-    # =====================================================
-    # Exercise
-    # =====================================================
-
-    if patient["Exercise Habits"] == "Low":
-
-        recommendations.append({
-
-            "Priority": "High",
-
-            "Category": "Lifestyle",
-
-            "Recommendation":
-            "Aim for at least 150 minutes of moderate exercise each week."
-
-        })
-
-    elif patient["Exercise Habits"] == "Medium":
-
-        recommendations.append({
-
-            "Priority": "Medium",
-
-            "Category": "Lifestyle",
-
-            "Recommendation":
-            "Increase physical activity to improve cardiovascular fitness."
-
-        })
-
-    # =====================================================
-    # BMI
-    # =====================================================
-
-    if patient["BMI"] >= 30:
-
-        recommendations.append({
-
-            "Priority": "High",
-
-            "Category": "Weight",
-
-            "Recommendation":
-            "Work towards gradual weight reduction through healthy eating and regular exercise."
-
-        })
-
-    elif patient["BMI"] >= 25:
-
-        recommendations.append({
-
-            "Priority": "Medium",
-
-            "Category": "Weight",
-
-            "Recommendation":
-            "Maintain a healthy diet and increase activity to achieve a normal BMI."
-
-        })
-
-    # =====================================================
-    # Blood Pressure
-    # =====================================================
-
-    if patient["Blood Pressure"] >= 140:
-
-        recommendations.append({
-
-            "Priority": "High",
-
-            "Category": "Medical",
-
-            "Recommendation":
-            "Consult your physician for blood pressure management and monitor it regularly."
-
-        })
-
-    elif patient["Blood Pressure"] >= 120:
-
-        recommendations.append({
-
-            "Priority": "Medium",
-
-            "Category": "Medical",
-
-            "Recommendation":
-            "Monitor your blood pressure regularly and reduce salt intake."
-
-        })
-
-    # =====================================================
-    # Diabetes
-    # =====================================================
-
-    if patient["Diabetes"] == "Yes":
-
-        recommendations.append({
-
-            "Priority": "High",
-
-            "Category": "Medical",
-
-            "Recommendation":
-            "Maintain proper blood sugar control through medication, diet and exercise."
-
-        })
-
-    # =====================================================
-    # High LDL
-    # =====================================================
-
-    if patient["High LDL Cholesterol"] == "Yes":
-
-        recommendations.append({
-
-            "Priority": "High",
-
-            "Category": "Diet",
-
-            "Recommendation":
-            "Reduce saturated fats and increase dietary fiber to lower LDL cholesterol."
-
-        })
-
-    # =====================================================
-    # Low HDL
-    # =====================================================
-
-    if patient["Low HDL Cholesterol"] == "Yes":
-
-        recommendations.append({
-
-            "Priority": "Medium",
-
-            "Category": "Diet",
-
-            "Recommendation":
-            "Increase HDL cholesterol by regular exercise, healthy fats, and maintaining a healthy weight."
-
-        })
-
-    # =====================================================
-    # Sugar
-    # =====================================================
-
-    if patient["Sugar Consumption"] == "High":
-
-        recommendations.append({
-
-            "Priority": "Medium",
-
-            "Category": "Diet",
-
-            "Recommendation":
-            "Reduce added sugar and sugary beverages."
-
-        })
-
-    # =====================================================
+    # ==========================================
     # Alcohol
-    # =====================================================
+    # ==========================================
 
-    if patient["Alcohol Consumption"] == "High":
-
-        recommendations.append({
-
-            "Priority": "Medium",
-
-            "Category": "Lifestyle",
-
-            "Recommendation":
-            "Reduce alcohol intake to recommended limits."
-
-        })
-
-    # =====================================================
-    # Stress
-    # =====================================================
-
-    if patient["Stress Level"] == "High":
+    if patient["Alcohol"] == "Yes":
 
         recommendations.append({
 
@@ -270,47 +219,30 @@ def generate_recommendations(patient):
             "Category": "Lifestyle",
 
             "Recommendation":
-            "Practice stress management techniques such as meditation, yoga, or deep breathing."
+            "Reduce alcohol consumption to recommended limits."
 
         })
 
-    # =====================================================
-    # Sleep
-    # =====================================================
+    # ==========================================
+    # Physical Activity
+    # ==========================================
 
-    if patient["Sleep Hours"] < 6:
+    if patient["Physical_Activity"] == "No":
 
         recommendations.append({
 
-            "Priority": "Medium",
+            "Priority": "High",
 
-            "Category": "Lifestyle",
+            "Category": "Exercise",
 
             "Recommendation":
-            "Aim for 7–9 hours of quality sleep every night."
+            "Aim for at least 150 minutes of moderate exercise every week."
 
         })
 
-    # =====================================================
-    # CRP
-    # =====================================================
-
-    if patient["CRP Level"] > 3:
-
-        recommendations.append({
-
-            "Priority": "Medium",
-
-            "Category": "Medical",
-
-            "Recommendation":
-            "Discuss elevated inflammation markers with your physician."
-
-        })
-
-    # =====================================================
-    # General Prevention
-    # =====================================================
+    # ==========================================
+    # General Recommendation
+    # ==========================================
 
     recommendations.append({
 
@@ -319,13 +251,13 @@ def generate_recommendations(patient):
         "Category": "Monitoring",
 
         "Recommendation":
-        "Schedule regular health check-ups and monitor blood pressure, blood sugar, and cholesterol."
+        "Schedule regular cardiovascular health check-ups."
 
     })
 
-    # =====================================================
+    # ==========================================
     # Remove duplicates
-    # =====================================================
+    # ==========================================
 
     unique = []
 
@@ -339,7 +271,7 @@ def generate_recommendations(patient):
 
             seen.add(item["Recommendation"])
 
-    priority_order = {
+    priority = {
 
         "High": 0,
 
@@ -351,7 +283,7 @@ def generate_recommendations(patient):
 
     unique.sort(
 
-        key=lambda x: priority_order[x["Priority"]]
+        key=lambda x: priority[x["Priority"]]
 
     )
 

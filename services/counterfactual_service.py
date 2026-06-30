@@ -59,117 +59,84 @@ from model.predictor import predict_risk
 
 def improve_patient(patient):
     """
-    Create an improved version of the patient
-    by modifying only modifiable risk factors.
+    Improve only the modifiable risk factors.
     """
 
     improved = copy.deepcopy(patient)
 
-    # =====================================================
+    # ---------------------------------------
     # Smoking
-    # =====================================================
+    # ---------------------------------------
 
     improved["Smoking"] = "No"
 
-    # =====================================================
-    # Exercise
-    # =====================================================
-
-    improved["Exercise Habits"] = "High"
-
-    # =====================================================
-    # Blood Pressure
-    # =====================================================
-
-    if improved["Blood Pressure"] > 120:
-        improved["Blood Pressure"] = 120
-
-    # =====================================================
-    # BMI
-    # =====================================================
-
-    if improved["BMI"] > 24.9:
-        improved["BMI"] = 24.5
-
-    # =====================================================
-    # LDL
-    # =====================================================
-
-    improved["High LDL Cholesterol"] = "No"
-
-    # =====================================================
-    # HDL
-    # =====================================================
-
-    improved["Low HDL Cholesterol"] = "No"
-
-    # =====================================================
+    # ---------------------------------------
     # Alcohol
-    # =====================================================
+    # ---------------------------------------
 
-    improved["Alcohol Consumption"] = "Low"
+    improved["Alcohol"] = "No"
 
-    # =====================================================
-    # Sugar
-    # =====================================================
+    # ---------------------------------------
+    # Physical Activity
+    # ---------------------------------------
 
-    improved["Sugar Consumption"] = "Low"
+    improved["Physical_Activity"] = "Yes"
 
-    # =====================================================
-    # Stress
-    # =====================================================
+    # ---------------------------------------
+    # Blood Pressure
+    # ---------------------------------------
 
-    improved["Stress Level"] = "Low"
+    if improved["Systolic_BP"] > 120:
+        improved["Systolic_BP"] = 120
 
-    # =====================================================
-    # Sleep
-    # =====================================================
+    if improved["Diastolic_BP"] > 80:
+        improved["Diastolic_BP"] = 80
 
-    if improved["Sleep Hours"] < 7:
-        improved["Sleep Hours"] = 7
+    # ---------------------------------------
+    # Weight (reduce BMI)
+    # ---------------------------------------
 
-    # =====================================================
-    # Triglycerides
-    # =====================================================
+    bmi = improved["Weight"] / (
+        (improved["Height"] / 100) ** 2
+    )
 
-    if improved["Triglyceride Level"] > 150:
-        improved["Triglyceride Level"] = 140
+    if bmi > 25:
 
-    # =====================================================
-    # Fasting Sugar
-    # =====================================================
+        target_weight = 24.9 * (
+            (improved["Height"] / 100) ** 2
+        )
 
-    if improved["Fasting Blood Sugar"] > 100:
-        improved["Fasting Blood Sugar"] = 95
+        improved["Weight"] = round(target_weight, 1)
 
-    # =====================================================
-    # CRP
-    # =====================================================
+    # ---------------------------------------
+    # Cholesterol
+    # ---------------------------------------
 
-    if improved["CRP Level"] > 1:
-        improved["CRP Level"] = 1
+    if improved["Cholesterol"] != "Normal":
+        improved["Cholesterol"] = "Normal"
 
-    # =====================================================
-    # Homocysteine
-    # =====================================================
+    # ---------------------------------------
+    # Glucose
+    # ---------------------------------------
 
-    if improved["Homocysteine Level"] > 12:
-        improved["Homocysteine Level"] = 10
+    if improved["Glucose"] != "Normal":
+        improved["Glucose"] = "Normal"
 
     return improved
 
 
 def generate_counterfactual(patient):
     """
-    Predict improved cardiac risk using the
-    trained Random Forest model.
+    Predict improved cardiac risk.
     """
 
     improved_patient = improve_patient(patient)
 
     processed = preprocess_input(improved_patient)
 
-    prediction, probability, risk_level = predict_risk(processed)
+    prediction, probability, risk_level = predict_risk(
+        processed
+    )
 
     return {
 

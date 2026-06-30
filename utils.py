@@ -15,19 +15,15 @@ from config import *
 def get_risk_category(probability):
 
     if probability < VERY_LOW:
-
         return "Very Low"
 
     elif probability < LOW:
-
         return "Low"
 
     elif probability < MODERATE:
-
         return "Moderate"
 
     elif probability < HIGH:
-
         return "High"
 
     return "Very High"
@@ -40,19 +36,15 @@ def get_risk_category(probability):
 def get_risk_color(probability):
 
     if probability < VERY_LOW:
-
         return LOW_COLOR
 
     elif probability < LOW:
-
         return LOW_COLOR
 
     elif probability < MODERATE:
-
         return MEDIUM_COLOR
 
     elif probability < HIGH:
-
         return HIGH_COLOR
 
     return VERY_HIGH_COLOR
@@ -65,33 +57,18 @@ def get_risk_color(probability):
 def calculate_confidence(probability):
 
     return round(
-
-        max(
-
-            probability,
-
-            1 - probability
-
-        ) * 100,
-
+        max(probability, 1 - probability) * 100,
         2
-
     )
 
 
 # ==========================================================
-# Percentage
+# Probability to Percentage
 # ==========================================================
 
 def probability_to_percent(probability):
 
-    return round(
-
-        probability * 100,
-
-        2
-
-    )
+    return round(probability * 100, 2)
 
 
 # ==========================================================
@@ -99,42 +76,77 @@ def probability_to_percent(probability):
 # ==========================================================
 
 def calculate_health_score(patient):
+    """
+    Calculate a simple health score
+    for the Kaggle cardiovascular dataset.
+    """
 
     score = 100
 
+    # ------------------------------------
+    # BMI
+    # ------------------------------------
+
+    bmi = patient["Weight"] / (
+        (patient["Height"] / 100) ** 2
+    )
+
+    if bmi >= 30:
+        score -= 15
+
+    elif bmi >= 25:
+        score -= 8
+
+    # ------------------------------------
     # Smoking
+    # ------------------------------------
+
     if patient["Smoking"] == "Yes":
         score -= 20
 
-    # Exercise
-    if patient["Exercise Habits"] == "Low":
-        score -= 15
-    elif patient["Exercise Habits"] == "Medium":
-        score -= 5
+    # ------------------------------------
+    # Alcohol
+    # ------------------------------------
 
-    # BMI
-    if patient["BMI"] >= 30:
-        score -= 15
-    elif patient["BMI"] >= 25:
-        score -= 8
-
-    # Blood Pressure
-    if patient["Blood Pressure"] >= 140:
-        score -= 15
-    elif patient["Blood Pressure"] >= 120:
-        score -= 8
-
-    # Diabetes
-    if patient["Diabetes"] == "Yes":
+    if patient["Alcohol"] == "Yes":
         score -= 10
 
-    # CRP
-    if patient["CRP Level"] > 3:
+    # ------------------------------------
+    # Physical Activity
+    # ------------------------------------
+
+    if patient["Physical_Activity"] == "No":
+        score -= 15
+
+    # ------------------------------------
+    # Blood Pressure
+    # ------------------------------------
+
+    if patient["Systolic_BP"] >= 140:
+        score -= 15
+
+    elif patient["Systolic_BP"] >= 120:
         score -= 8
 
-    # Sleep
-    if patient["Sleep Hours"] < 6:
-        score -= 5
+    # ------------------------------------
+    # Cholesterol
+    # ------------------------------------
+
+    if patient["Cholesterol"] == "Well Above Normal":
+        score -= 12
+
+    elif patient["Cholesterol"] == "Above Normal":
+        score -= 6
+
+    # ------------------------------------
+    # Glucose
+    # ------------------------------------
+
+    if patient["Glucose"] == "Well Above Normal":
+        score -= 12
+
+    elif patient["Glucose"] == "Above Normal":
+        score -= 6
 
     score = max(score, 0)
 
@@ -148,20 +160,15 @@ def calculate_health_score(patient):
 def health_status(score):
 
     if score >= 90:
-
         return "Excellent"
 
     elif score >= 75:
-
         return "Good"
 
     elif score >= 60:
-
         return "Fair"
 
     elif score >= 40:
-
         return "Needs Improvement"
 
     return "High Attention Required"
-
