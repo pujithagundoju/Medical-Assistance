@@ -25,7 +25,7 @@ DATA_PATH = "data/heart.csv"      # <-- Change if your dataset filename differs
 # Model
 # ==========================================================
 
-MODEL_PATH = "model/best_model.pkl"
+MODEL_PATH = "model/random_forest.pkl"
 
 RANDOM_STATE = 42
 
