@@ -14,7 +14,8 @@
 """
 LIME Explainability Module
 
-Provides local explanations for an individual prediction.
+Generates local explanations for an individual
+cardiac risk prediction.
 """
 
 import joblib
@@ -23,34 +24,39 @@ import streamlit as st
 
 from lime.lime_tabular import LimeTabularExplainer
 
+from config import MODEL_PATH
 from preprocessing.data_loader import load_data
 from preprocessing.data_cleaning import clean_data
 
 
-# ============================================================
+# ==========================================================
 # Load Model
-# ============================================================
+# ==========================================================
 
 @st.cache_resource
 def load_model():
+    """
+    Load trained Random Forest model.
+    """
+    return joblib.load(MODEL_PATH)
 
-    return joblib.load("model/best_model.pkl")
 
-
-# ============================================================
+# ==========================================================
 # Build LIME Explainer
-# ============================================================
+# ==========================================================
 
 @st.cache_resource
 def load_lime_explainer():
+    """
+    Build the LIME explainer using the
+    cleaned training dataset.
+    """
 
-    df = load_data("data/heart_disease.csv")
+    df = load_data("data/cardio_train.csv")
 
-    df, _ = clean_data(df)
+    df = clean_data(df)
 
-    X = df.drop(
-        columns=["Heart Disease Status"]
-    )
+    X = df.drop(columns=["Heart_Disease"])
 
     explainer = LimeTabularExplainer(
 
@@ -58,22 +64,30 @@ def load_lime_explainer():
 
         feature_names=X.columns.tolist(),
 
-        class_names=["Low Risk", "High Risk"],
+        class_names=[
+            "Low Cardiac Risk",
+            "High Cardiac Risk"
+        ],
 
         mode="classification",
 
-        discretize_continuous=True
+        discretize_continuous=True,
+
+        random_state=42
 
     )
 
     return explainer
 
 
-# ============================================================
-# Explain Prediction
-# ============================================================
+# ==========================================================
+# Generate Explanation
+# ==========================================================
 
 def get_lime_explanation(processed_data):
+    """
+    Generate LIME explanation for a single patient.
+    """
 
     model = load_model()
 
@@ -85,7 +99,7 @@ def get_lime_explanation(processed_data):
 
         model.predict_proba,
 
-        num_features=10
+        num_features=len(processed_data.columns)
 
     )
 
@@ -105,9 +119,7 @@ def get_lime_explanation(processed_data):
 
     explanation_df["Impact"] = (
 
-        explanation_df["Contribution"]
-
-        .abs()
+        explanation_df["Contribution"].abs()
 
     )
 
@@ -116,6 +128,14 @@ def get_lime_explanation(processed_data):
         by="Impact",
 
         ascending=False
+
+    ).drop(columns="Impact")
+
+    explanation_df.reset_index(
+
+        drop=True,
+
+        inplace=True
 
     )
 
