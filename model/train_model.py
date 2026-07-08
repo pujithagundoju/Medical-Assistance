@@ -351,6 +351,49 @@ plt.savefig(
 plt.close()
 
 # ============================================================
+# SHAP & LIME FIGURES
+# ============================================================
+
+from explainability.shap_analysis import get_shap_explanation
+from explainability.lime_analysis import get_lime_explanation
+
+from visualizations.shap_plots import shap_bar_plot
+from visualizations.lime_plots import lime_bar_plot
+
+print("\nGenerating SHAP & LIME Figures...")
+
+sample = X_test.iloc[[0]]
+
+# ---------------- SHAP ----------------
+
+shap_df = get_shap_explanation(sample)
+
+fig = shap_bar_plot(shap_df)
+
+fig.savefig(
+    "figures/chapter8/figure8_3_shap_bar.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.close(fig)
+
+# ---------------- LIME ----------------
+
+lime_df = get_lime_explanation(sample)
+
+fig = lime_bar_plot(lime_df)
+
+fig.savefig(
+    "figures/chapter8/figure8_4_lime_bar.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.close(fig)
+
+print("SHAP & LIME figures saved successfully.")
+# ============================================================
 # Save Model
 # ============================================================
 

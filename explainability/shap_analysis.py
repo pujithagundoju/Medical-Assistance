@@ -97,7 +97,7 @@ import streamlit as st
 @st.cache_resource
 def load_model():
 
-    return joblib.load("model/best_model.pkl")
+    return joblib.load("model/random_forest.pkl")
 
 
 # ============================================================
@@ -116,24 +116,68 @@ def load_explainer():
 # Calculate SHAP Values
 # ============================================================
 
+# def get_shap_explanation(processed_data):
+
+#     explainer = load_explainer()
+
+#     shap_values = explainer.shap_values(processed_data)
+
+#     model = load_model()
+
+#     feature_names = model.feature_names_in_
+
+#     # Binary classification
+#     if isinstance(shap_values, list):
+
+#         values = shap_values[1][0]
+
+#     else:
+
+#         values = shap_values[0]
+
+#     shap_df = pd.DataFrame({
+
+#         "Feature": feature_names,
+
+#         "SHAP_Value": values,
+
+#         "Impact": abs(values)
+
+#     })
+
+#     shap_df = shap_df.sort_values(
+
+#         by="Impact",
+
+#         ascending=False
+
+#     ).reset_index(drop=True)
+
+#     return shap_df
+
 def get_shap_explanation(processed_data):
 
     explainer = load_explainer()
-
-    shap_values = explainer.shap_values(processed_data)
 
     model = load_model()
 
     feature_names = model.feature_names_in_
 
+    # Compute SHAP values
+    shap_values = explainer(processed_data)
+
+    # ========================================================
+    # Compatible with SHAP 0.52+
+    # ========================================================
+
+    values = shap_values.values
+
     # Binary classification
-    if isinstance(shap_values, list):
+    if values.ndim == 3:
+        values = values[:, :, 1]
 
-        values = shap_values[1][0]
-
-    else:
-
-        values = shap_values[0]
+    # Single patient
+    values = values[0]
 
     shap_df = pd.DataFrame({
 
@@ -154,8 +198,6 @@ def get_shap_explanation(processed_data):
     ).reset_index(drop=True)
 
     return shap_df
-
-
 # ============================================================
 # Top Risk Drivers
 # ============================================================
