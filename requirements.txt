@@ -3,9 +3,11 @@ pandas
 numpy
 scikit-learn
 matplotlib
+plotly
+joblib
 shap
 lime
-joblib
 reportlab
+python-dotenv
 google-generativeai
 Pillow
