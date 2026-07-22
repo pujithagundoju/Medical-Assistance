@@ -1,11 +1,11 @@
 streamlit
 pandas
 numpy
-scikit-learn
+scikit-learn==1.8.0
 matplotlib
 plotly
 joblib
-shap
+shap==0.52.0
 lime
 reportlab
 python-dotenv

@@ -172,6 +172,31 @@ if predict_button:
             processed_data
         )
 
+#         prediction, probability, risk_level = predict_risk(processed_data)
+
+#         prediction_text = (
+#             "High Cardiac Risk"
+#             if prediction == 1
+#             else "Low Cardiac Risk"
+#         )
+# # Show prediction immediately
+#         render_prediction_cards(
+#             prediction_text,
+#             probability,
+#             risk_level
+#         )
+
+#         clinical_summary = interpret_patient(patient_data)
+
+# # SHAP should not stop the whole application
+#         try:
+#             shap_df = get_shap_explanation(processed_data)
+#             top_factors = get_top_risk_drivers(shap_df)
+#         except Exception as e:
+#             st.warning(f"SHAP explanation unavailable: {e}")
+#             shap_df = None
+#             top_factors = None
+
         top_factors = get_top_risk_drivers(
             shap_df
         )
