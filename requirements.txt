@@ -9,5 +9,5 @@ shap
 lime
 reportlab
 python-dotenv
-google-generativeai
+google-genai
 Pillow
