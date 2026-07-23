@@ -75,21 +75,44 @@ st.set_page_config(
 
 )
 
+# # ==========================================================
+# # Session State
+# # ==========================================================
+
+# if "prediction_done" not in st.session_state:
+
+#     st.session_state.prediction_done = False
+
+# if "results" not in st.session_state:
+
+#     st.session_state.results = {}
+
+# if "chat_history" not in st.session_state:
+
+#     st.session_state.chat_history = []
+
 # ==========================================================
 # Session State
 # ==========================================================
 
-if "prediction_done" not in st.session_state:
+defaults = {
+    "prediction_done": False,
+    "results": {},
+    "chat_history": [],
 
-    st.session_state.prediction_done = False
+    # Lazy-loaded components
+    "shap_loaded": False,
+    "lime_loaded": False,
+    "ai_loaded": False,
 
-if "results" not in st.session_state:
+    "shap_df": None,
+    "top_factors": None,
+    "ai_explanation": None
+}
 
-    st.session_state.results = {}
-
-if "chat_history" not in st.session_state:
-
-    st.session_state.chat_history = []
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
 # ==========================================================
 # Sidebar
@@ -138,6 +161,148 @@ predict_button = st.button(
 
 )
 
+# # ==========================================================
+# # Prediction Pipeline
+# # ==========================================================
+
+# if predict_button:
+
+#     try:
+
+#         processed_data = preprocess_input(
+#             patient_data
+#         )
+
+#         prediction, probability, risk_level = predict_risk(
+#             processed_data
+#         )
+
+#         prediction_text = (
+
+#             "High Cardiac Risk"
+
+#             if prediction == 1
+
+#             else "Low Cardiac Risk"
+
+#         )
+
+#         clinical_summary = interpret_patient(
+#             patient_data
+#         )
+
+#         shap_df = get_shap_explanation(
+#             processed_data
+#         )
+
+# #         prediction, probability, risk_level = predict_risk(processed_data)
+
+# #         prediction_text = (
+# #             "High Cardiac Risk"
+# #             if prediction == 1
+# #             else "Low Cardiac Risk"
+# #         )
+# # # Show prediction immediately
+# #         render_prediction_cards(
+# #             prediction_text,
+# #             probability,
+# #             risk_level
+# #         )
+
+# #         clinical_summary = interpret_patient(patient_data)
+
+# # # SHAP should not stop the whole application
+# #         try:
+# #             shap_df = get_shap_explanation(processed_data)
+# #             top_factors = get_top_risk_drivers(shap_df)
+# #         except Exception as e:
+# #             st.warning(f"SHAP explanation unavailable: {e}")
+# #             shap_df = None
+# #             top_factors = None
+
+#         top_factors = get_top_risk_drivers(
+#             shap_df
+#         )
+
+#         recommendations = generate_recommendations(
+#             patient_data
+#         )
+
+#         with st.spinner(
+#             "Generating AI Clinical Explanation..."
+#         ):
+
+#             ai_explanation = explain_prediction(
+
+#                 patient_data,
+
+#                 probability,
+
+#                 top_factors,
+
+#                 clinical_summary
+
+#             )
+#         # ==========================================================
+#         # Save Results
+#         # ==========================================================
+
+#         st.session_state.results = {
+
+#             "processed_data": processed_data,
+
+#             "patient_data": patient_data,
+
+#             "prediction": prediction,
+
+#             "prediction_text": prediction_text,
+
+#             "probability": probability,
+
+#             "risk_level": risk_level,
+
+#             "clinical_summary": clinical_summary,
+
+#             "shap_df": shap_df,
+
+#             "top_factors": top_factors,
+
+#             "recommendations": recommendations,
+
+#             "ai_explanation": ai_explanation
+
+#         }
+
+#         # ----------------------------------------------
+
+#         st.session_state["patient_context"] = {
+
+#             "patient": patient_data,
+
+#             "prediction": prediction_text,
+
+#             "probability": probability,
+
+#             "clinical_summary": clinical_summary,
+
+#             "risk_factors": top_factors.to_dict(
+#                 "records"
+#             )
+
+#         }
+
+#         # ----------------------------------------------
+
+#         st.session_state.prediction_done = True
+
+#     except Exception as e:
+
+#         st.error(
+#             "⚠ Unable to generate prediction."
+#         )
+
+#         st.exception(e)
+
 # ==========================================================
 # Prediction Pipeline
 # ==========================================================
@@ -146,83 +311,34 @@ if predict_button:
 
     try:
 
-        processed_data = preprocess_input(
-            patient_data
-        )
+        with st.spinner("Analyzing patient data..."):
 
-        prediction, probability, risk_level = predict_risk(
-            processed_data
-        )
+            processed_data = preprocess_input(patient_data)
 
-        prediction_text = (
-
-            "High Cardiac Risk"
-
-            if prediction == 1
-
-            else "Low Cardiac Risk"
-
-        )
-
-        clinical_summary = interpret_patient(
-            patient_data
-        )
-
-        shap_df = get_shap_explanation(
-            processed_data
-        )
-
-#         prediction, probability, risk_level = predict_risk(processed_data)
-
-#         prediction_text = (
-#             "High Cardiac Risk"
-#             if prediction == 1
-#             else "Low Cardiac Risk"
-#         )
-# # Show prediction immediately
-#         render_prediction_cards(
-#             prediction_text,
-#             probability,
-#             risk_level
-#         )
-
-#         clinical_summary = interpret_patient(patient_data)
-
-# # SHAP should not stop the whole application
-#         try:
-#             shap_df = get_shap_explanation(processed_data)
-#             top_factors = get_top_risk_drivers(shap_df)
-#         except Exception as e:
-#             st.warning(f"SHAP explanation unavailable: {e}")
-#             shap_df = None
-#             top_factors = None
-
-        top_factors = get_top_risk_drivers(
-            shap_df
-        )
-
-        recommendations = generate_recommendations(
-            patient_data
-        )
-
-        with st.spinner(
-            "Generating AI Clinical Explanation..."
-        ):
-
-            ai_explanation = explain_prediction(
-
-                patient_data,
-
-                probability,
-
-                top_factors,
-
-                clinical_summary
-
+            prediction, probability, risk_level = predict_risk(
+                processed_data
             )
-        # ==========================================================
-        # Save Results
-        # ==========================================================
+
+            prediction_text = (
+                "High Cardiac Risk"
+                if prediction == 1
+                else "Low Cardiac Risk"
+            )
+
+            clinical_summary = interpret_patient(patient_data)
+
+            recommendations = generate_recommendations(
+                patient_data
+            )
+
+        # Reset lazy-loaded objects
+        st.session_state.shap_loaded = False
+        st.session_state.lime_loaded = False
+        st.session_state.ai_loaded = False
+
+        st.session_state.shap_df = None
+        st.session_state.top_factors = None
+        st.session_state.ai_explanation = None
 
         st.session_state.results = {
 
@@ -240,17 +356,9 @@ if predict_button:
 
             "clinical_summary": clinical_summary,
 
-            "shap_df": shap_df,
-
-            "top_factors": top_factors,
-
-            "recommendations": recommendations,
-
-            "ai_explanation": ai_explanation
+            "recommendations": recommendations
 
         }
-
-        # ----------------------------------------------
 
         st.session_state["patient_context"] = {
 
@@ -260,26 +368,19 @@ if predict_button:
 
             "probability": probability,
 
-            "clinical_summary": clinical_summary,
-
-            "risk_factors": top_factors.to_dict(
-                "records"
-            )
+            "clinical_summary": clinical_summary
 
         }
 
-        # ----------------------------------------------
-
         st.session_state.prediction_done = True
+
+        st.success("Prediction generated successfully.")
 
     except Exception as e:
 
-        st.error(
-            "⚠ Unable to generate prediction."
-        )
+        st.error("⚠ Unable to generate prediction.")
 
         st.exception(e)
-
 # ==========================================================
 # Dashboard
 # ==========================================================
@@ -405,41 +506,123 @@ if st.session_state.prediction_done:
     # TAB 2
     # ==========================================================
 
+    # with tab2:
+
+    #     render_shap_tab(
+
+    #         processed_data
+
+    #     )
     with tab2:
 
-        render_shap_tab(
-
-            processed_data
-
-        )
+         if not st.session_state.shap_loaded:
+         
+                 with st.spinner("Generating SHAP explanation..."):
+         
+                     try:
+         
+                         shap_df = get_shap_explanation(processed_data)
+         
+                         top_factors = get_top_risk_drivers(shap_df)
+         
+                         st.session_state.shap_df = shap_df
+         
+                         st.session_state.top_factors = top_factors
+         
+                         st.session_state.shap_loaded = True
+         
+                         if "patient_context" not in st.session_state:
+                             st.session_state.patient_context = {}
+         
+                         st.session_state.patient_context["risk_factors"] = (
+                             top_factors.to_dict("records")
+                         )
+         
+                     except Exception as e:
+         
+                         st.error(f"Unable to generate SHAP explanation.\n\n{e}")
+         
+         render_shap_tab(processed_data)
+    
 
     # ==========================================================
     # TAB 3
     # ==========================================================
 
+    # with tab3:
+
+    #     render_lime_tab(
+
+    #         processed_data
+
+    #     )
     with tab3:
 
-        render_lime_tab(
+           if not st.session_state.lime_loaded:
 
-            processed_data
+              with st.spinner("Generating LIME explanation..."):
 
-        )
+               st.session_state.lime_loaded = True
 
+           render_lime_tab(processed_data)
     # ==========================================================
     # TAB 4
     # ==========================================================
 
+    # with tab4:
+
+    #     st.subheader(
+    #         "🤖 AI Clinical Explanation"
+    #     )
+
+    #     st.markdown(
+
+    #         ai_explanation
+
+    #     )
     with tab4:
 
-        st.subheader(
-            "🤖 AI Clinical Explanation"
-        )
+     st.subheader("🤖 AI Clinical Explanation")
 
-        st.markdown(
+     if not st.session_state.ai_loaded:
 
-            ai_explanation
+        with st.spinner("Generating AI Clinical Explanation..."):
 
-        )
+            try:
+
+                if st.session_state.top_factors is None:
+
+                    shap_df = get_shap_explanation(processed_data)
+
+                    top_factors = get_top_risk_drivers(shap_df)
+
+                    st.session_state.shap_df = shap_df
+
+                    st.session_state.top_factors = top_factors
+
+                ai_text = explain_prediction(
+
+                    patient_data,
+
+                    probability,
+
+                    st.session_state.top_factors,
+
+                    clinical_summary
+
+                )
+
+                st.session_state.ai_explanation = ai_text
+
+                st.session_state.ai_loaded = True
+
+            except Exception as e:
+
+                st.error(f"Unable to generate AI explanation.\n\n{e}")
+
+    if st.session_state.ai_explanation:
+
+        st.markdown(st.session_state.ai_explanation)
 
     # ==========================================================
     # TAB 5
