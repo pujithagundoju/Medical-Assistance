@@ -1,4 +1,3 @@
-
 """
 LIME Dashboard Component
 """
